@@ -6,9 +6,10 @@ import logging
 
 def dump_to_file(agent, base, size, error, directory):
         try:
-                filename = str(base) + '_dump.data'
+                # filename = str(base) + '_dump.data'
+                filename = 'dump.bin'
                 dump = agent.read_memory(base, size)
-                f = open(os.path.join(directory, filename), 'wb')
+                f = open(os.path.join(directory, filename), 'ab')
                 f.write(dump)
                 f.close()
                 return error

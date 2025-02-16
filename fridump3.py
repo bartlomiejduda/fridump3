@@ -50,7 +50,7 @@ print(logo)
 
 arguments = MENU()
 
-# Define Configurations
+print("Defining configurations...")
 APP_NAME = utils.normalize_app_name(appName=arguments.process)
 DIRECTORY = ""
 USB = arguments.usb
@@ -72,25 +72,36 @@ if arguments.verbose:
 logging.basicConfig(format='%(levelname)s:%(message)s', level=DEBUG_LEVEL)
 
 
-# Start a new Session
+print("Starting a new session...")
+print("APP_NAME: " + APP_NAME)
 session = None
 try:
     if USB:
+        print("USB Session")
         session = frida.get_usb_device().attach(APP_NAME)
     elif NETWORK:
-        session = frida.get_device_manager().add_remote_device(IP).attach(APP_NAME)
+        print("Network Session")
+        print("IP: " + IP)
+        # session = frida.get_device_manager().add_remote_device(IP).attach(APP_NAME)
+        device = frida.get_device_manager().add_remote_device(IP)
+        pid = device.spawn([APP_NAME])
+        session = device.attach(pid)
+        device.resume(pid)
     else:
+        print("Regular Session")
         session = frida.attach(APP_NAME)
 except Exception as e:
+    print("Exception occured while creating session!")
     print(str(e))
     sys.exit()
 
 
 # Selecting Output directory
+print("Selecting output directory...")
 if arguments.out is not None:
     DIRECTORY = arguments.out
     if os.path.isdir(DIRECTORY):
-        print("Output directory is set to: " + DIRECTORY)
+        print("[1] Output directory is set to: " + DIRECTORY)
     else:
         print("The selected output directory does not exist!")
         sys.exit(1)
@@ -98,7 +109,7 @@ if arguments.out is not None:
 else:
     print("Current Directory: " + str(os.getcwd()))
     DIRECTORY = os.path.join(os.getcwd(), "dump")
-    print("Output directory is set to: " + DIRECTORY)
+    print("[2] Output directory is set to: " + DIRECTORY)
     if not os.path.exists(DIRECTORY):
         print("Creating directory...")
         os.makedirs(DIRECTORY)
@@ -125,7 +136,8 @@ rpc.exports = {
 script.on("message", on_message)
 script.load()
 
-agent = script.exports_sync
+
+agent = script.exports
 ranges = agent.enumerate_ranges(PERMS)
 
 if arguments.max_size is not None:
